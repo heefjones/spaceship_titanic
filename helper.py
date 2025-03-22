@@ -150,7 +150,7 @@ def cross_val_model(estimator, data_name, data, scaler, models_df, folds=10):
     - data_name (str): Name of the dataset being used.
     - data (pd.DataFrame): Data to model.
     - scaler (sklearn scaler, optional): Scaler to use for data.
-    - models_df (pd.DataFrame): DataFrame to save model results to. Expected columns: ['Model', 'Model_Params', 'Scaler', 'Feature_Set', 'Train_LogLoss', 'Val_LogLoss', 'Train_Acc', 'Val_Acc']
+    - models_df (pd.DataFrame): DataFrame to save model results to. Expected columns: ['Model', 'Scaler', 'Feature_Set', 'Train_LogLoss', 'Val_LogLoss', 'Train_Acc', 'Val_Acc']
     - folds (int): Number of cross-validation folds to use. Default is 10.
     
     Returns:
@@ -213,7 +213,6 @@ def cross_val_model(estimator, data_name, data, scaler, models_df, folds=10):
     # prepare a new row with averages
     new_row = {
         'Model': estimator.__class__.__name__,
-        'Model_Params': str(estimator.get_params()),
         'Scaler': scaler.__class__.__name__,
         'Feature_Set': data_name,
         'Train_LogLoss': np.mean(train_logloss_list),
