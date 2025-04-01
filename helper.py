@@ -99,31 +99,31 @@ def create_feature_sets(df, degree=2):
     # list of numeric and categorical columns
     num_cols = df.select_dtypes(include=['number']).columns
 
-    ### base features
+    # base features
     feature_sets['base_features'] = df.copy()
 
-    ### polynomial features
+    # polynomial features
     poly = PolynomialFeatures(degree=degree, interaction_only=False, include_bias=False)
     poly_features = poly.fit_transform(df[num_cols])
     poly_df = pd.DataFrame(poly_features, columns=poly.get_feature_names_out(num_cols))
     poly_df.index = df.index
     feature_sets['poly_features'] = pd.concat([df.drop(num_cols, axis=1), poly_df], axis=1)
 
-    ### 📚 Polynomial Features (doubled)
+    # polynomial features (doubled)
     poly_doubled = PolynomialFeatures(degree=degree*2, interaction_only=False, include_bias=False)
     poly_features_doubled = poly_doubled.fit_transform(df[num_cols])
     poly_doubled_df = pd.DataFrame(poly_features_doubled, columns=poly_doubled.get_feature_names_out(num_cols))
     poly_doubled_df.index = df.index
     feature_sets['poly_doubled_features'] = pd.concat([df.drop(num_cols, axis=1), poly_doubled_df], axis=1)
 
-    ### ⚡️ interaction features (only pairwise)
+    # interaction features (only pairwise)
     interaction = PolynomialFeatures(degree=degree, interaction_only=True, include_bias=False)
     interaction_features = interaction.fit_transform(df[num_cols])
     interaction_df = pd.DataFrame(interaction_features, columns=interaction.get_feature_names_out(num_cols))
     interaction_df.index = df.index
     feature_sets['interaction_features'] = pd.concat([df.drop(num_cols, axis=1), interaction_df], axis=1)
 
-    ### 🎲 polynomial + interaction features
+    # polynomial + interaction features
     poly_interaction_features = interaction.fit_transform(poly_df)
     poly_interaction_df = pd.DataFrame(poly_interaction_features, columns=interaction.get_feature_names_out(poly_df.columns))
     poly_interaction_df.index = df.index
@@ -154,18 +154,11 @@ def cross_val_model(estimator, data_name, data, scaler, models_df, folds=10):
     num_selector = make_column_selector(dtype_include='number')
     cat_selector = make_column_selector(dtype_exclude='number')
 
-    # create column transformer to handle encoding and scaling
-    preprocessor = make_column_transformer(
-        (OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_selector),
-        remainder='passthrough'
-    )
+    # create column transformer to handle encoding
+    preprocessor = make_column_transformer((OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_selector), remainder='passthrough')
 
     # define the pipeline
-    pipeline = Pipeline(steps=[
-        ('preprocessor', preprocessor),
-        ('scaler', scaler),
-        ('model', estimator)
-    ])
+    pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('scaler', scaler), ('model', estimator)])
 
     # define X and y
     X = data.drop(['PassengerId', 'Transported'], axis=1)
@@ -175,8 +168,8 @@ def cross_val_model(estimator, data_name, data, scaler, models_df, folds=10):
     train_logloss_list, val_logloss_list = [], []
     train_acc_list, val_acc_list = [], []
     
+    # iterate through k-folds
     kf = KFold(n_splits=folds, shuffle=True, random_state=SEED)
-    
     for train_index, val_index in kf.split(X):
         # split X and y
         X_train, X_val = X.iloc[train_index], X.iloc[val_index]
@@ -236,17 +229,10 @@ def make_pipeline(model, scaler):
     cat_selector = make_column_selector(dtype_exclude='number')
 
     # create column transformer to handle encoding and scaling
-    preprocessor = make_column_transformer(
-        (OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_selector),
-        remainder='passthrough'
-    )
+    preprocessor = make_column_transformer((OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_selector), remainder='passthrough')
 
     # define a pipeline with preprocessing, scaling, and model
-    pipeline = Pipeline([
-        ('preprocessor', preprocessor),
-        ('scaler', scaler),
-        ('model', model)
-    ])
+    pipeline = Pipeline([('preprocessor', preprocessor), ('scaler', scaler), ('model', model)])
 
     return pipeline
 
@@ -266,8 +252,7 @@ def xgb_cv(max_depth, n_estimators, learning_rate, gamma, min_child_weight, subs
     """
 
     # define XGBoost parameters
-    params = {
-        'max_depth': int(max_depth),
+    params = {'max_depth': int(max_depth),
         'n_estimators': int(n_estimators),
         'learning_rate': learning_rate,
         'gamma': gamma,
@@ -281,8 +266,7 @@ def xgb_cv(max_depth, n_estimators, learning_rate, gamma, min_child_weight, subs
         'use_label_encoder': False,
         'device': 'cuda',
         'tree_method': 'hist',
-        'random_state': SEED 
-    }
+        'random_state': SEED}
 
     # create pipeline
     pipeline = make_pipeline(XGBClassifier(**params), StandardScaler())
@@ -291,5 +275,5 @@ def xgb_cv(max_depth, n_estimators, learning_rate, gamma, min_child_weight, subs
     kf = KFold(n_splits=10, shuffle=True, random_state=SEED)
     scores = cross_val_score(pipeline, X, y, cv=kf, scoring='neg_log_loss')
 
-    # return mean 10-fold cross-validation score
+    # return mean cv score
     return scores.mean()
