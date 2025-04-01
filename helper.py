@@ -1,6 +1,5 @@
 # data science
 import pandas as pd
-import polars as pl
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -30,16 +29,10 @@ sns.set(style='whitegrid', font='Average')
 
 # global vars
 ROOT = './data/'
-MENS_ROOT = './data/mens/'
-WOMENS_ROOT = './data/womens/'
 
 # set numpy seed
 SEED = 9
 np.random.seed(SEED)
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-
-# eda_compact.ipynb
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -123,14 +116,14 @@ def create_feature_sets(df, degree=2):
     poly_doubled_df.index = df.index
     feature_sets['poly_doubled_features'] = pd.concat([df.drop(num_cols, axis=1), poly_doubled_df], axis=1)
 
-    ### ⚡️ Interaction Features (Only Pairwise)
+    ### ⚡️ interaction features (only pairwise)
     interaction = PolynomialFeatures(degree=degree, interaction_only=True, include_bias=False)
     interaction_features = interaction.fit_transform(df[num_cols])
     interaction_df = pd.DataFrame(interaction_features, columns=interaction.get_feature_names_out(num_cols))
     interaction_df.index = df.index
     feature_sets['interaction_features'] = pd.concat([df.drop(num_cols, axis=1), interaction_df], axis=1)
 
-    ### 🎲 Polynomial + Interaction Features
+    ### 🎲 polynomial + interaction features
     poly_interaction_features = interaction.fit_transform(poly_df)
     poly_interaction_df = pd.DataFrame(poly_interaction_features, columns=interaction.get_feature_names_out(poly_df.columns))
     poly_interaction_df.index = df.index
@@ -259,12 +252,20 @@ def make_pipeline(model, scaler):
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-# define the objective function for bayes_opt
 def xgb_cv(max_depth, n_estimators, learning_rate, gamma, min_child_weight, subsample, colsample_bytree, colsample_bylevel, colsample_bynode, X, y):
     """
     Objective function for XGBoost hyperparameter tuning using Bayesian Optimization.
+
+    Args:
+    - XGBClassifier parameters: max_depth, n_estimators, learning_rate, gamma, min_child_weight, subsample, colsample_bytree, colsample_bylevel, colsample_bynode
+    - X (pd.DataFrame): Feature set.
+    - y (pd.Series): Target variable.
+
+    Returns:
+    - scores.mean() (float): Mean log loss from 10-fold cross-validation.
     """
 
+    # define XGBoost parameters
     params = {
         'max_depth': int(max_depth),
         'n_estimators': int(n_estimators),
