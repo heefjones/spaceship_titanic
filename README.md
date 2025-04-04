@@ -32,6 +32,6 @@ The dataset is a fictional version of the [Titanic](https://www.kaggle.com/compe
 /spaceship_titanic
 ├── submission.ipynb
 ├── helper.py
-├── /models_df.csv
+├── models_df.csv
 └── README.md
 ```
