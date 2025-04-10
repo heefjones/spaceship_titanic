@@ -96,7 +96,7 @@ def create_feature_sets(df, degree=2):
     """
     feature_sets = {}
 
-    # list of numeric and categorical columns
+    # list of numeric columns
     num_cols = df.select_dtypes(include=['number']).columns
 
     # base features
